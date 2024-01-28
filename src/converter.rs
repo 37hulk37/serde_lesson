@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Write};
+use std::io::{BufReader, BufWriter, Read, Write};
 use serde::{Deserialize, Serialize};
 use serde::de::DeserializeOwned;
 use strum::{Display, EnumString};
@@ -44,22 +44,38 @@ fn build_file_path(fname: &str, ftype: &str) -> String {
     path + fname + "." + ftype.to_lowercase().as_str()
 }
 
-fn parse_json<T: DeserializeOwned, R: Sized>(reader: &mut BufReader<R>) -> T {
+fn parse_json<T, R>(reader: &mut BufReader<R>) -> T
+where
+    T: DeserializeOwned,
+    R: Sized + Read
+{
     serde_json::from_reader(reader).unwrap()
 }
 
-fn parse_yaml<T: DeserializeOwned, R: Sized>(reader: &mut BufReader<R>) -> T {
+fn parse_yaml<T, R>(reader: &mut BufReader<R>) -> T
+where
+    T: DeserializeOwned,
+    R: Sized + Read
+{
     serde_yaml::from_reader(reader).unwrap()
 }
 
-fn write_yaml<T: Serialize>(object: &T, writer: &mut BufWriter<File>) {
+fn write_yaml<T, R>(object: &T, writer: &mut BufWriter<R>)
+where
+    T: Serialize,
+    R: Sized + Write
+{
     match writer.write_all(serde_yaml::to_string(object).unwrap().as_bytes()) {
         Ok(()) => writer.flush().unwrap(),
         Err(err) => panic!("{}", err)
     }
 }
 
-fn write_json<T: Serialize>(object: &T, writer: &mut BufWriter<File>) {
+fn write_json<T, R>(object: &T, writer: &mut BufWriter<R>)
+where
+    T: Serialize,
+    R: Sized + Write
+{
     match writer.write_all(serde_json::to_string(object).unwrap().as_bytes()) {
         Ok(()) => writer.flush().unwrap(),
         Err(err) => panic!("{}", err)
